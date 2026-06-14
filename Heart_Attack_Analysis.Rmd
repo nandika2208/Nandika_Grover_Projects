@@ -1,0 +1,232 @@
+---
+title: "Heart Attack Factor Analysis"
+author: "Nandika Grover"
+output: bookdown::html_document2
+date: "2026-03-20"
+---
+<style>
+  body { font-size: 18px; }
+  h1 { font-size: 24px; }
+  h2 { font-size: 22px; }
+  p { font-size: 18px; }
+</style>
+
+# Preamble: defining variables 
+This section demonstrates dynamic referencing in code for the dataset. We can change any names in the preamble section, in order to change the full document. This allows you to easily create new reports by just altering a few lines.
+
+```{r Preamble}
+setwd("/Users/nandika/Desktop/UIUC/spring 26/STAT385")
+DataSet <- read.csv("heart_attack_Midterm.csv")
+DataName <- "Heart Attacks in China"
+
+x0 <- as.numeric(DataSet$Blood_Pressure)
+x0name <- "Blood Pressure"
+x1 <- as.factor(DataSet$Heart_Attack)
+x1name <- "Heart Attack"
+x2 <- as.factor(DataSet$Obesity)
+x2name <- "Obesity"
+x3 <- as.factor(DataSet$Rural_or_Urban)
+x3name <- " Urban"
+x4 <- as.factor(DataSet$Alcohol_Consumption)
+x4name <- "Alcohol Consumption"
+x5 <- as.factor(DataSet$Smoking_Status)
+x5name <- "Smoking"
+x6 <- as.factor(DataSet$Physical_Activity)
+x6name <- "Physical Activity"
+x7 <- as.numeric(DataSet$Age)
+x7name <- "Age"
+x8 <- as.factor(DataSet$Gender)
+x8name <- "Gender"
+
+
+```
+
+# Statistical Programming 
+
+This section demonstrates the various statistical analysis performed on the data given in the dataset `r DataName` 
+
+## Analysis of Variance {#anova}
+
+
+This part caters to the analysis of variance to identify the main effects between x0 (`r x0name`) and x1 (`r x1name`), and its interaction effect with x2 (`r x2name`). 
+
+``` {r question 1}
+
+Q1 <- aov( x0 ~ x1 * x2)
+summ<- summary(Q1)
+summ
+
+```
+### Analysis 
+An ANOVA test was performed to show the relation between `r x1name` and `r x0name`, with the latter being the dependent variable. There is also an interaction term, `r x2name`,  which examines whether `r x2name` moderates the relationship between `r x1name` and `r x0name`. 
+
+The summary of the test shows the following results:
+
+**`r x1name`(x1):** F-value- 3434.535 and pvalue- 2e-16
+
+**`r x2name` (x2):** F-value-  10.373 and pvalue- 0.00128
+
+**`r x1name` (x1) : `r x2name` (x2) :**  F-value-  3.594 and pvalue- 0.05801 .
+
+The ANOVA results show that `r x1name` has a statistically significant effect on `r x0name`
+(F = 3434.535, p < 0.001), while `r x2name` also shows a smaller but significant effect (F = 10.373, p = 0.00128). The interaction term is not statistically significant (p = 0.058), suggesting limited evidence of interaction.
+
+
+### Visualisations 
+
+```{r question1, fig.cap = paste0( "Distribution of ", x0name, " by ", x1name)}
+library(ggplot2)
+library(gridExtra)
+
+p1 <- ggplot(DataSet, aes(x = x1, y = x0, fill = x1)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(
+    title = paste(x1name, "vs", x0name),
+    x = x1name,
+    y = x0name,
+    fill = x1name
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(DataSet, aes(x=x1, y=x0, fill=x2)) +
+  geom_boxplot() +
+  labs(x= x1name, 
+       y= x0name,
+       fill= x2name,
+       title = paste("Distribution of", x0name, "by", x1name, "and", x2name))+
+  theme_minimal()
+  
+grid.arrange(p1,p2, nrow=1)
+
+```
+
+The plot on the left shows the distribution of `r x0name` across the levels of `r x1name`. From the boxplot, it is apparent that the median `r x0name` differs between `r x1name` categories, indicating a strong main effect of `r x1name` on `r x0name`.
+
+Whereas the plot on the right illustrates the interaction between `r x1name` and `r x2name` on `r x0name`. For each level of `r x1name`, we see side by side boxplots representing the levels of `r x2name`. This grouping allows us to assess whether the effect of `r x1name` on `r x0name` differs by `r x2name`. While there are some visible differences between `r x2name` levels—particularly when `r x1name` = Yes—these differences are not substantial or consistent enough to indicate a strong interaction effect. This aligns with the ANOVA results, which showed that the interaction term is not statistically significant.
+
+## Regression Model {#regression}
+
+
+This section performs regression analysis and prepares predictive model of `r x1name` using predictors `r x2name` , `r x3name` and `r x4name`.
+
+``` {r regression }
+
+Q2 <- glm(x1 ~ x2 + x3 + x4 , family = binomial )
+summary(Q2)
+
+DataSet$pred <- predict(Q2, type="response")
+
+```
+### Analysis 
+
+This performs a logistic regression to predict the probability of `r x1name`  using `r x2name`, `r x3name` and `r x4name` as predictors. The model estimates how each factor influences the likelihood of a `r x1name` Predicted probabilities for each individual in the dataset were then stored in DataSet$pred, which can be used to assess the distribution of risk across the population. 
+
+The summary of the model shows the following results:
+
+**`r x2name` (x2):** Estimate = 1.437, z-value = 24.26, p-value < 2e-16
+
+**`r x3name` (x3):** Estimate = -2.420, z-value = -37.42, p-value < 2e-16
+
+**`r x4name` (x4):** Estimate = 3.010, z-value = 42.34, p-value < 2e-16
+
+
+This indicates that all three predictors are highly significant in predicting `r x1name`. Specifically, being classified as `r x2name` increases the chances of `r x1name`, while living in an `r x3name` area reduces it. `r x4name` strongly increases the likelihood of `r x1name`. Overall, these results highlight that `r x2name` and `r x4name` are major risk factors, whereas `r x3name` residence appears protective. 
+
+### Visualisations
+
+```{r regression1, fig.cap = paste("Distribution of predicted", x1name)}
+
+library(ggplot2)
+p3 <- ggplot(DataSet, aes(x = pred)) +
+  geom_density( alpha = 0.5)
+
+p4 <- ggplot(DataSet, aes(x=pred, fill=x1)) +
+  geom_density(alpha=0.4) +
+  theme_minimal() +
+  labs(title=paste("Distribution of Predicted" ,x1name ,"Probabilities"),
+       x="Predicted Probability",
+       y="Density",
+       fill=x1name) 
+
+grid.arrange(p3,p4,nrow=1)
+
+```
+
+The plot on the left shows the distribution of the prediction of the regression model using a density curve. The density plot represents how the values of prediction are spread across the DatSset, with higher peaks indicating ranges where observations are more concentrated. The x-axis displays the values of prediction, while the y-axis represents the estimated probability density.The density is the maximum around 0.3 - 0.50. 
+
+The plot on the right shows the distribution of predicted probabilities through the regression model across the two groups of `r x1name`. The probability curve shows probabilities of individuals with or without `r x1name`. There is a substantial overlap between the two groups, indicating that the model does not clearly distinguish between them both. Hence it shows that the model is **not a good fit**. 
+
+
+## Joe's CaseStudy {#joe}
+
+
+The following study shows the demographic variables of Joe. Joe is a 40 year-old male who 1) drinks alcohol, 2) smokes, 3) lives in an urban area and 4) has low physical activity. 
+
+``` {r Joe}
+joe <- data.frame(
+  x3 = "Urban",
+  x4 = "Yes",
+  x5 = "Smoker",
+  x6 = "Low",
+  x7 = 40,
+  x8 = "Male" )
+```
+
+The following code creates an appropriate prediction model to conduct analysis. 
+
+```{r joe_code}
+Q3 <- glm(x1 ~ x3 + x4 + x5 + x6, family = binomial )
+joe$pred <- predict(Q3, newdata = joe, type = "response")
+```
+
+Following are the different scenarios used to predict the risk of `r x1name`and to store them in various rows of the data frame "joe". 
+
+```{r joe_pred}
+no_alcohol <- joe
+no_alcohol$x4 <- "No"
+no_alcohol$pred <- predict(Q3, newdata = no_alcohol, type = "response")
+
+no_smoke <- joe
+no_smoke$x5 <- "Non-Smoker"
+no_smoke$pred <- predict(Q3, newdata = no_smoke, type = "response")
+
+rural <- joe
+rural$x3 <- "Rural"
+rural$pred <- predict(Q3, newdata = rural, type = "response")
+
+active <- joe
+active$x6 <- "High"
+active$pred <- predict(Q3, newdata = active, type = "response")
+
+newrisk<- data.frame(
+  newdata = c( "No Alcohol", "No Smoking", "Rural", "Increase Activity"),
+  risk = c( no_alcohol$pred, no_smoke$pred, rural$pred, active$pred)
+)
+```
+
+### Visualisation
+
+```{r joe, fig.cap=("Bar chart showing the level of decrease")}
+decrease <- joe$pred - newrisk$risk
+barplot( decrease , col= "red", main="BarPlot showing Decrease", 
+         ylab = "Decrease from Current Risk" , names.arg = newrisk$newdata)
+```
+
+The plot depicts that the decrease in the risk of a `r x1name` is maximum, when there is no `r x4name`. Overall it shows that there is slight decrease with leaving `r x5name`. On the other hand, switching from `r x3name` and increase `r x6name` to High from Low has a negative impact, thus increasing the chances of `r x1name` instead of lowering them. 
+
+CONCLUSION: Joe should change `r x4name` in order to decrease the risk of `r x1name`. 
+
+## Conclusion 
+
+This project caters to the various methods of analysis statistical data. The various questions, highlight different aspects. 
+While Section \@ref(anova) performs ANOVA on `r x0name` and `r x1name`, Section \@ref(regression) looks into performing regression analysis and building appropriate prediction models for the given dataset. 
+On the other hand Section \@ref(joe) caters to the case study of Joe and using appropriate models predicts the changes necessary to reduce the risk of `r x1name`.
+
+
+
+
+
+
+
+
+
